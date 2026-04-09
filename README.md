@@ -14,6 +14,7 @@ Note is a local desktop app that looks like a simple memo app on the surface, bu
 ## Local development
 
 ```bash
+node -v  # Node 24+
 npm install
 npm run dev
 ```
@@ -47,6 +48,8 @@ The repository includes a Windows workflow at:
 ```
 
 It runs on `windows-latest`, installs dependencies, runs lint and tests, then builds the Windows zip bundle and uploads it as an artifact named `Note-Windows-Zip`.
+
+The workflow and local baseline now target Node 24.
 
 ## Current security boundary
 
