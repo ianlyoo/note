@@ -40,7 +40,6 @@ export interface MutationResult {
 export interface NoteBridge {
   bootstrap: () => Promise<BootstrapData>
   setMasterPassword: (password: string) => Promise<MutationResult>
-  unlockProtectedNote: (password: string) => Promise<MutationResult>
   lockProtectedSession: () => Promise<MutationResult>
   savePlainNote: (noteId: string, title: string, body: string) => Promise<MutationResult>
   saveProtectedNote: (title: string, body: string) => Promise<MutationResult>

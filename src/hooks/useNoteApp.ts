@@ -89,12 +89,6 @@ export function useNoteApp() {
         () => getBridge().setMasterPassword(password),
         'Password saved.',
       ),
-    unlockProtectedNote: async (password: string) =>
-      runMutation(
-        'unlockProtectedNote',
-        () => getBridge().unlockProtectedNote(password),
-        'Protected note unlocked.',
-      ),
     lockProtectedSession: async () =>
       runMutation(
         'lockProtectedSession',

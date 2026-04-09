@@ -3,11 +3,16 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import type { BootstrapData, LockedItem, LockedItemType, MutationResult, NoteDocument } from '../src/lib/types'
-import { PROTECTED_NOTE_ID, createPreview } from '../src/lib/utils'
-import { decryptProtectedBody, encryptProtectedBody, hashPassword, verifyPassword } from './crypto'
+import { PROTECTED_NOTE_ID, createPreview, matchesUnlockText } from '../src/lib/utils'
 import type { StoredNote, StoredState } from './models'
 import { StateStore } from './stateStore'
-import { createLockRecord, lockTarget, reconcileRecord, unlockTarget as unlockTargetPath, validateLockablePath } from './lockService'
+import {
+  createLockRecord,
+  lockTarget,
+  reconcileRecord,
+  unlockTarget as unlockTargetPath,
+  validateLockablePath,
+} from './lockService'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -31,27 +36,17 @@ function ensureStore() {
   return store
 }
 
-function protectedNoteBody(note: StoredNote) {
-  if (!sessionPassword || !note.encryptedBody) {
-    return ''
-  }
-
-  return decryptProtectedBody(note.encryptedBody, sessionPassword)
-}
-
 function toNoteDocument(note: StoredNote): NoteDocument {
-  const isProtected = note.id === PROTECTED_NOTE_ID
-  const body = isProtected ? protectedNoteBody(note) : note.plainBody
-  const locked = isProtected && !sessionPassword
+  const isProtectedLocked = note.id === PROTECTED_NOTE_ID && !sessionPassword
 
   return {
     id: note.id,
     title: note.title,
     kind: note.kind,
-    body,
-    preview: locked ? 'Open this note and enter the password to reveal protected items.' : createPreview(body),
+    body: isProtectedLocked ? '' : note.body,
+    preview: isProtectedLocked ? 'No additional text yet.' : createPreview(note.body),
     updatedAt: note.updatedAt,
-    isLocked: locked,
+    isLocked: isProtectedLocked,
   }
 }
 
@@ -68,7 +63,7 @@ async function buildBootstrap(): Promise<BootstrapData> {
   const sessionUnlocked = Boolean(sessionPassword)
 
   return {
-    hasPassword: Boolean(state.passwordConfig),
+    hasPassword: Boolean(state.password),
     sessionUnlocked,
     protectedNoteId: PROTECTED_NOTE_ID,
     notes: sortNotes(state.notes.map(toNoteDocument)),
@@ -76,7 +71,10 @@ async function buildBootstrap(): Promise<BootstrapData> {
   }
 }
 
-async function mutateResult(mutator: (state: StoredState) => Promise<void> | void, message?: string): Promise<MutationResult> {
+async function mutateResult(
+  mutator: (state: StoredState) => Promise<void> | void,
+  message?: string,
+): Promise<MutationResult> {
   await ensureStore().mutate(async (state) => {
     await mutator(state)
   })
@@ -99,11 +97,18 @@ function getProtectedNote(state: StoredState) {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1320,
-    height: 840,
-    minWidth: 1120,
-    minHeight: 720,
-    backgroundColor: '#101417',
+    width: 980,
+    height: 680,
+    minWidth: 980,
+    minHeight: 680,
+    maxWidth: 980,
+    maxHeight: 680,
+    useContentSize: true,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    autoHideMenuBar: true,
+    backgroundColor: '#f6f4ef',
     title: 'Note',
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
@@ -139,51 +144,31 @@ app.on('window-all-closed', () => {
 ipcMain.handle('note:bootstrap', async () => buildBootstrap())
 
 ipcMain.handle('note:set-master-password', async (_event, password: string) => {
-  if (password.trim().length < 6) {
-    throw new Error('Use a password with at least 6 characters.')
+  const normalizedPassword = password.trim()
+
+  if (normalizedPassword.length === 0) {
+    throw new Error('Enter a password to continue.')
   }
 
   const result = await mutateResult((state) => {
-    if (state.passwordConfig) {
+    if (state.password) {
       throw new Error('A password has already been created for this Note profile.')
     }
 
-    state.passwordConfig = hashPassword(password)
-
-    const protectedNote = getProtectedNote(state)
-    protectedNote.encryptedBody = encryptProtectedBody(protectedNote.plainBody, password)
-    protectedNote.plainBody = ''
-    protectedNote.updatedAt = new Date().toISOString()
+    state.password = normalizedPassword
   }, 'Protected note is now configured.')
 
-  sessionPassword = password
+  sessionPassword = normalizedPassword
+
   return {
     ...result,
     bootstrap: await buildBootstrap(),
   }
 })
 
-ipcMain.handle('note:unlock-protected', async (_event, password: string) => {
-  const state = await ensureStore().load()
-
-  if (!state.passwordConfig) {
-    throw new Error('Create a password first.')
-  }
-
-  if (!verifyPassword(password, state.passwordConfig)) {
-    throw new Error('The password did not match this Note profile.')
-  }
-
-  sessionPassword = password
-
-  return {
-    bootstrap: await buildBootstrap(),
-    message: 'Protected note unlocked.',
-  }
-})
-
 ipcMain.handle('note:lock-session', async () => {
   sessionPassword = null
+
   return {
     bootstrap: await buildBootstrap(),
     message: 'Protected note locked.',
@@ -191,26 +176,53 @@ ipcMain.handle('note:lock-session', async () => {
 })
 
 ipcMain.handle('note:save-plain-note', async (_event, noteId: string, title: string, body: string) => {
-  return mutateResult((state) => {
-    const note = state.notes.find((entry) => entry.id === noteId && entry.kind === 'plain')
+  const currentState = await ensureStore().load()
+  const note = currentState.notes.find((entry) => entry.id === noteId)
 
-    if (!note) {
-      throw new Error('Plain note not found.')
+  if (!note) {
+    throw new Error('Note not found.')
+  }
+
+  if (note.id === PROTECTED_NOTE_ID && !sessionPassword && matchesUnlockText(body, currentState.password)) {
+    sessionPassword = currentState.password
+
+    return {
+      bootstrap: await buildBootstrap(),
+      message: 'Protected tools unlocked.',
+    }
+  }
+
+  if (note.id === PROTECTED_NOTE_ID && !sessionPassword) {
+    return {
+      bootstrap: await buildBootstrap(),
+      message: 'Note stayed unchanged.',
+    }
+  }
+
+  return mutateResult((state) => {
+    const nextNote = state.notes.find((entry) => entry.id === noteId)
+
+    if (!nextNote) {
+      throw new Error('Note not found.')
     }
 
-    note.title = title.trim() || 'Untitled'
-    note.plainBody = body
-    note.updatedAt = new Date().toISOString()
+    if (nextNote.id === PROTECTED_NOTE_ID && sessionPassword) {
+      throw new Error('Use the protected tools workspace to save this note.')
+    }
+
+    nextNote.title = title.trim() || 'Untitled'
+    nextNote.body = body
+    nextNote.updatedAt = new Date().toISOString()
   }, 'Note saved.')
 })
 
 ipcMain.handle('note:save-protected-note', async (_event, title: string, body: string) => {
-  const activePassword = requireUnlockedSession()
+  requireUnlockedSession()
 
   return mutateResult((state) => {
     const note = getProtectedNote(state)
     note.title = title.trim() || 'Reference'
-    note.encryptedBody = encryptProtectedBody(body, activePassword)
+    note.body = body
     note.updatedAt = new Date().toISOString()
   }, 'Protected note saved.')
 })

@@ -5,7 +5,6 @@ import type { LockedItemType, NoteBridge } from '../src/lib/types'
 const bridge: NoteBridge = {
   bootstrap: () => ipcRenderer.invoke('note:bootstrap'),
   setMasterPassword: (password: string) => ipcRenderer.invoke('note:set-master-password', password),
-  unlockProtectedNote: (password: string) => ipcRenderer.invoke('note:unlock-protected', password),
   lockProtectedSession: () => ipcRenderer.invoke('note:lock-session'),
   savePlainNote: (noteId: string, title: string, body: string) =>
     ipcRenderer.invoke('note:save-plain-note', noteId, title, body),
