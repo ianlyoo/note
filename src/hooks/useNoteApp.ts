@@ -3,7 +3,7 @@ import { getBridge } from '../lib/api'
 import type { BootstrapData, LockedItemType, MutationResult } from '../lib/types'
 
 interface StatusMessage {
-  tone: 'success' | 'error' | 'info'
+  tone: 'error'
   message: string
 }
 
@@ -26,21 +26,12 @@ export function useNoteApp() {
     async (
       actionName: string,
       mutation: () => Promise<MutationResult>,
-      fallbackMessage: string,
-      successTone: StatusMessage['tone'] = 'success',
     ) => {
       setPendingAction(actionName)
 
       try {
         const result = await mutation()
         setBootstrap(result.bootstrap)
-
-        if (result.message || fallbackMessage) {
-          setStatus({
-            tone: successTone,
-            message: result.message ?? fallbackMessage,
-          })
-        }
 
         return result
       } catch (error) {
@@ -84,54 +75,32 @@ export function useNoteApp() {
     dismissStatus: () => setStatus(null),
     reloadBootstrap,
     setMasterPassword: async (password: string) =>
-      runMutation(
-        'setMasterPassword',
-        () => getBridge().setMasterPassword(password),
-        'Password saved.',
-      ),
+      runMutation('setMasterPassword', () => getBridge().setMasterPassword(password)),
     lockProtectedSession: async () =>
-      runMutation(
-        'lockProtectedSession',
-        () => getBridge().lockProtectedSession(),
-        'Protected note locked.',
-        'info',
-      ),
+      runMutation('lockProtectedSession', () => getBridge().lockProtectedSession()),
     savePlainNote: async (noteId: string, title: string, body: string) =>
-      runMutation(
-        `savePlain:${noteId}`,
-        () => getBridge().savePlainNote(noteId, title, body),
-        'Note saved.',
-      ),
+      runMutation(`savePlain:${noteId}`, () => getBridge().savePlainNote(noteId, title, body)),
     saveProtectedNote: async (title: string, body: string) =>
-      runMutation(
-        'saveProtected',
-        () => getBridge().saveProtectedNote(title, body),
-        'Protected note saved.',
-      ),
+      runMutation('saveProtected', () => getBridge().saveProtectedNote(title, body)),
     pickAndLockTarget: async (targetType: LockedItemType) =>
-      runMutation(
-        `pick:${targetType}`,
-        () => getBridge().pickAndLockTarget(targetType),
-        targetType === 'file' ? 'File locked.' : 'Folder locked.',
-      ),
+      runMutation(`pick:${targetType}`, () => getBridge().pickAndLockTarget(targetType)),
     unlockTarget: async (lockId: string) =>
-      runMutation(`unlock:${lockId}`, () => getBridge().unlockTarget(lockId), 'Target unlocked.'),
+      runMutation(`unlock:${lockId}`, () => getBridge().unlockTarget(lockId)),
     reconcileLockedItems: async () =>
-      runMutation(
-        'reconcileLockedItems',
-        () => getBridge().reconcileLockedItems(),
-        'Locked items refreshed.',
-        'info',
-      ),
+      runMutation('reconcileLockedItems', () => getBridge().reconcileLockedItems()),
     revealLockedItem: async (lockId: string) => {
       setPendingAction(`reveal:${lockId}`)
 
       try {
         const result = await getBridge().revealLockedItem(lockId)
-        setStatus({
-          tone: result.ok ? 'info' : 'error',
-          message: result.message ?? (result.ok ? 'Opened item location.' : 'Could not reveal item.'),
-        })
+
+        if (!result.ok) {
+          setStatus({
+            tone: 'error',
+            message: result.message ?? 'Could not reveal item.',
+          })
+        }
+
         return result
       } catch (error) {
         setStatus({ tone: 'error', message: getErrorMessage(error) })

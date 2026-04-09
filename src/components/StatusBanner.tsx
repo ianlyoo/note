@@ -5,11 +5,15 @@ interface StatusBannerProps {
 }
 
 export function StatusBanner({ tone, message, onDismiss }: StatusBannerProps) {
+  if (tone !== 'error') {
+    return null
+  }
+
   return (
     <div
       className={`status-banner status-banner--${tone}`}
-      role={tone === 'error' ? 'alert' : 'status'}
-      aria-live="polite"
+      role="alert"
+      aria-live="assertive"
     >
       <p className="status-banner__message">{message}</p>
       {onDismiss ? (
