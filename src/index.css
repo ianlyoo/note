@@ -22,12 +22,12 @@
   --radius-lg: 1.125rem;
 
   --border-width: 1px;
-  --window-padding: 0.75rem;
-  --sidebar-width: 15.5rem;
+  --window-padding: 0;
+  --sidebar-width: 14.25rem;
   --transition-fast: 140ms ease;
   --transition-medium: 220ms ease;
 
-  --color-window: #e9ecf1;
+  --color-window: #edf0f4;
   --color-shell: rgba(248, 249, 251, 0.96);
   --color-sidebar: #f3f4f7;
   --color-card: #ffffff;
@@ -74,9 +74,7 @@ body,
 
 body {
   margin: 0;
-  background:
-    linear-gradient(180deg, #f4f6f9 0%, var(--color-window) 100%),
-    var(--color-window);
+  background: var(--color-window);
 }
 
 button,
@@ -108,12 +106,8 @@ textarea:focus-visible {
   height: 100%;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--space-3);
+  gap: var(--space-2);
   padding: var(--space-3);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-shell);
-  box-shadow: var(--shadow-app);
   overflow: hidden;
 }
 
@@ -130,10 +124,10 @@ textarea:focus-visible {
 
 .app-topbar {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-1) var(--space-2) 0;
+  padding: var(--space-1) 0 0;
 }
 
 .app-topbar__eyebrow,
@@ -185,8 +179,8 @@ textarea:focus-visible {
 .app-main {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, var(--sidebar-width)) minmax(0, 1fr);
-  gap: var(--space-3);
+  grid-template-columns: minmax(12.75rem, var(--sidebar-width)) minmax(0, 1.35fr);
+  gap: var(--space-2);
   overflow: hidden;
 }
 
@@ -200,9 +194,9 @@ textarea:focus-visible {
 .state-panel {
   min-height: 0;
   border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   background: var(--color-card);
-  box-shadow: var(--shadow-panel);
+  box-shadow: none;
 }
 
 .sidebar-panel {
@@ -318,34 +312,32 @@ textarea:focus-visible {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
   overflow: hidden;
 }
 
 .note-editor {
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   flex: 1;
 }
 
-.workspace-stack {
-  min-height: 0;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) minmax(0, 0.92fr);
-  gap: var(--space-3);
-}
-
 .workspace-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
+  gap: var(--space-4);
+  padding: var(--space-5);
   overflow: hidden;
 }
 
 .workspace-card--editor {
   background: linear-gradient(180deg, #fffefb 0%, #fffdfa 100%);
+}
+
+.workspace-card--canvas {
+  flex: 1;
 }
 
 .workspace-card--tools {
@@ -399,6 +391,10 @@ textarea:focus-visible {
 .field-group--fill {
   flex: 1;
   min-height: 0;
+}
+
+.field-group--title-row {
+  gap: var(--space-1);
 }
 
 .field-label {
@@ -475,11 +471,23 @@ textarea:focus-visible {
 }
 
 .text-area--note {
-  padding: var(--space-2) 0 0;
+  padding: var(--space-3) 0 0;
   border: none;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+}
+
+.protected-workspace {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1;
+}
+
+.editor-header--workspace {
+  align-items: flex-start;
 }
 
 .text-area--note:hover,
@@ -635,6 +643,15 @@ textarea:focus-visible {
   overflow: auto;
 }
 
+.managed-list--workspace {
+  flex: 1;
+  padding-right: 0;
+}
+
+.toolbar-actions--workspace {
+  padding-bottom: var(--space-1);
+}
+
 .managed-item {
   display: flex;
   flex-direction: column;
@@ -703,6 +720,11 @@ textarea:focus-visible {
 
 .empty-state__title {
   font-size: 0.95rem;
+}
+
+.empty-state--workspace {
+  flex: 1;
+  justify-content: center;
 }
 
 .note-list,

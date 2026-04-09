@@ -24,6 +24,7 @@ function App() {
     revealLockedItem,
   } = useNoteApp()
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
+  const visibleStatus = status?.tone === 'error' ? status : null
 
   const resolvedSelectedNoteId = useMemo(() => {
     if (!bootstrap) {
@@ -84,8 +85,8 @@ function App() {
   if (!bootstrap.hasPassword) {
     return (
       <div className="app-shell app-shell--state app-shell--setup">
-        {status ? (
-          <StatusBanner tone={status.tone} message={status.message} onDismiss={dismissStatus} />
+        {visibleStatus ? (
+          <StatusBanner tone={visibleStatus.tone} message={visibleStatus.message} onDismiss={dismissStatus} />
         ) : null}
 
         <ProtectedNoteGate
@@ -124,8 +125,8 @@ function App() {
         </aside>
 
         <section className="workspace">
-          {status ? (
-            <StatusBanner tone={status.tone} message={status.message} onDismiss={dismissStatus} />
+          {visibleStatus ? (
+            <StatusBanner tone={visibleStatus.tone} message={visibleStatus.message} onDismiss={dismissStatus} />
           ) : null}
 
           {!selectedNote ? (
@@ -144,7 +145,7 @@ function App() {
               onSave={async (title, body) => {
                 await saveProtectedNote(title, body)
               }}
-              onLockSession={async () => {
+              onExit={async () => {
                 await lockProtectedSession()
               }}
               onPickAndLock={async (targetType) => {

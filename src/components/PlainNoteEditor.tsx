@@ -53,7 +53,7 @@ export function PlainNoteEditor({ note, isSaving, onSave }: PlainNoteEditorProps
       }}
       onKeyDown={handleKeyDown}
     >
-      <section className="workspace-card workspace-card--editor">
+      <section className="workspace-card workspace-card--editor workspace-card--canvas">
         <header className="editor-header">
           <div>
             <p className="editor-header__eyebrow">Note</p>
