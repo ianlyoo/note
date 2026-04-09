@@ -15,6 +15,7 @@ import {
 } from './lockService'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const PORTABLE_DATA_DIRECTORY_NAME = 'userdata'
 
 let mainWindow: BrowserWindow | null = null
 let store: StateStore | null = null
@@ -95,6 +96,10 @@ function getProtectedNote(state: StoredState) {
   return note
 }
 
+function getWindowIconPath() {
+  return app.isPackaged ? path.join(__dirname, '../icon.png') : path.join(process.cwd(), 'icon.png')
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 980,
@@ -109,6 +114,7 @@ function createWindow() {
     fullscreenable: false,
     autoHideMenuBar: true,
     backgroundColor: '#f6f4ef',
+    icon: getWindowIconPath(),
     title: 'Note',
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
@@ -124,7 +130,17 @@ function createWindow() {
   }
 }
 
+function configurePortableUserDataPath() {
+  if (!app.isPackaged) {
+    return
+  }
+
+  const executableDirectory = path.dirname(app.getPath('exe'))
+  app.setPath('userData', path.join(executableDirectory, PORTABLE_DATA_DIRECTORY_NAME))
+}
+
 app.whenReady().then(() => {
+  configurePortableUserDataPath()
   store = new StateStore(app.getPath('userData'))
   createWindow()
 
