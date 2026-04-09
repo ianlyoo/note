@@ -1,7 +1,6 @@
 {
   "name": "note",
   "productName": "Note",
-  "description": "A local note app with a protected note for hiding and restoring files or folders.",
   "author": "ianlyoo",
   "main": "dist-electron/main.js",
   "private": true,
@@ -14,7 +13,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "pack:dir": "npm run build && electron-builder --dir",
-    "dist:win": "npm run build && electron-builder --win portable --x64 --publish never"
+    "dist:win": "npm run build && electron-builder --win zip --x64 --publish never"
   },
   "build": {
     "appId": "com.secretfolder.note",
@@ -24,23 +23,21 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
+      "icon.png",
       "package.json"
     ],
     "asar": true,
     "win": {
+      "icon": "icon.ico",
       "target": [
         {
-          "target": "portable",
+          "target": "zip",
           "arch": [
             "x64"
           ]
         }
       ],
-      "artifactName": "${productName}-Portable-${version}.${ext}"
-    },
-    "portable": {
-      "artifactName": "${productName}-Portable-${version}.${ext}",
-      "unpackDirName": "NotePortable"
+      "artifactName": "${productName}-Windows-${version}.${ext}"
     }
   },
   "dependencies": {

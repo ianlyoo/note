@@ -6,18 +6,17 @@ import { describe, expect, it } from 'vitest'
 interface PackageJsonShape {
   main: string
   productName: string
+  description?: string
   scripts: Record<string, string>
   build: {
     files: string[]
     win: {
+      icon: string
       artifactName: string
       target: Array<{
         target: string
         arch: string[]
       }>
-    }
-    portable: {
-      unpackDirName: string
     }
   }
 }
@@ -33,16 +32,17 @@ describe('Windows packaging configuration', () => {
 
     expect(packageJson.main).toBe('dist-electron/main.js')
     expect(packageJson.productName).toBe('Note')
+    expect(packageJson.description).toBeUndefined()
   })
 
-  it('defines scripts for local packing and Windows installer builds', () => {
+  it('defines scripts for local packing and Windows zip builds', () => {
     const packageJson = readPackageJson()
 
     expect(packageJson.scripts['pack:dir']).toContain('electron-builder --dir')
-    expect(packageJson.scripts['dist:win']).toContain('electron-builder --win portable --x64')
+    expect(packageJson.scripts['dist:win']).toContain('electron-builder --win zip --x64')
   })
 
-  it('ships the built renderer and Electron bundles in the portable build', () => {
+  it('ships the built renderer and Electron bundles in the Windows zip build', () => {
     const packageJson = readPackageJson()
 
     expect(packageJson.build.files).toEqual(
@@ -50,16 +50,16 @@ describe('Windows packaging configuration', () => {
     )
   })
 
-  it('targets a Windows portable executable with the expected artifact name', () => {
+  it('targets a Windows zip package with the expected icon and artifact name', () => {
     const packageJson = readPackageJson()
 
     expect(packageJson.build.win.target).toEqual([
       {
-        target: 'portable',
+        target: 'zip',
         arch: ['x64'],
       },
     ])
-    expect(packageJson.build.win.artifactName).toBe('${productName}-Portable-${version}.${ext}')
-    expect(packageJson.build.portable.unpackDirName).toBe('NotePortable')
+    expect(packageJson.build.win.icon).toBe('icon.ico')
+    expect(packageJson.build.win.artifactName).toBe('${productName}-Windows-${version}.${ext}')
   })
 })
