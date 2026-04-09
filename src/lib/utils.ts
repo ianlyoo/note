@@ -11,6 +11,14 @@ export function createPreview(body: string) {
   return body.trim().replace(/\s+/g, ' ').slice(0, 96)
 }
 
+export function matchesUnlockText(input: string, password: string | null) {
+  if (!password) {
+    return false
+  }
+
+  return input.trim() === password.trim()
+}
+
 export function deriveLockStatus(params: {
   originalExists: boolean
   lockedExists: boolean

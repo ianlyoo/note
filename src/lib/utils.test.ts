@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildLockedName, deriveLockStatus } from './utils'
+import { buildLockedName, deriveLockStatus, matchesUnlockText } from './utils'
 
 describe('buildLockedName', () => {
   it('keeps the original file name in the locked name', () => {
@@ -19,5 +19,19 @@ describe('deriveLockStatus', () => {
 
   it('marks missing targets as missing', () => {
     expect(deriveLockStatus({ originalExists: false, lockedExists: false })).toBe('missing')
+  })
+})
+
+describe('matchesUnlockText', () => {
+  it('accepts the matching saved note text', () => {
+    expect(matchesUnlockText('open-sesame', 'open-sesame')).toBe(true)
+  })
+
+  it('ignores surrounding whitespace while matching', () => {
+    expect(matchesUnlockText('  open-sesame\n', 'open-sesame')).toBe(true)
+  })
+
+  it('rejects non-matching text', () => {
+    expect(matchesUnlockText('not-it', 'open-sesame')).toBe(false)
   })
 })
