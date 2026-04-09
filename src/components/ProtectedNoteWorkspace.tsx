@@ -32,26 +32,26 @@ function formatUpdatedAt(value: string) {
 function getStatusLabel(status: LockStatus) {
   switch (status) {
     case 'locked':
-      return 'Locked'
+      return 'Stored'
     case 'missing':
       return 'Missing'
     case 'conflict':
       return 'Conflict'
     case 'error':
-      return 'Error'
+      return 'Needs care'
   }
 }
 
 function getStatusDetail(item: LockedItem) {
   switch (item.status) {
     case 'locked':
-      return 'Stored in the protected area and ready to unlock when needed.'
+      return 'Saved with this note and ready to restore when you need it.'
     case 'missing':
-      return 'The original item is missing. Refresh after checking whether it was moved or removed.'
+      return 'The original item could not be found. Refresh after checking whether it was moved or removed.'
     case 'conflict':
       return 'A naming conflict needs attention before the original location can be restored cleanly.'
     case 'error':
-      return item.lastError || 'This item could not be reconciled yet. Refresh or reveal its location for details.'
+      return item.lastError || 'This item could not be refreshed yet. Reveal its location for more detail.'
   }
 }
 
@@ -94,7 +94,7 @@ export function ProtectedNoteWorkspace({
   return (
     <div className="workspace-stack">
       <form
-        className="workspace-card"
+        className="workspace-card workspace-card--editor"
         onSubmit={(event) => {
           event.preventDefault()
           void handleSubmit()
@@ -103,16 +103,15 @@ export function ProtectedNoteWorkspace({
       >
         <header className="editor-header">
           <div>
-            <p className="editor-header__eyebrow">Protected note</p>
-            <h2 className="workspace-card__title">{note.title.trim() || 'Protected note'}</h2>
+            <p className="editor-header__eyebrow">Note</p>
             <p className="workspace-card__body">Updated {formatUpdatedAt(note.updatedAt)}</p>
           </div>
           <div className="editor-header__actions">
             <span className={`save-state ${isDirty ? 'save-state--warning' : 'save-state--muted'}`}>
-              {isDirty ? 'Unsaved changes' : 'Up to date'}
+              {isDirty ? 'Edited' : 'Saved'}
             </span>
             <button type="submit" className="btn btn--primary" disabled={!isDirty || pendingAction === 'saveProtected'}>
-              {pendingAction === 'saveProtected' ? 'Saving…' : 'Save note'}
+              {pendingAction === 'saveProtected' ? 'Saving…' : 'Save'}
             </button>
             <button
               type="button"
@@ -122,32 +121,32 @@ export function ProtectedNoteWorkspace({
               }}
               disabled={pendingAction === 'lockProtectedSession'}
             >
-              {pendingAction === 'lockProtectedSession' ? 'Locking…' : 'Lock note area'}
+              {pendingAction === 'lockProtectedSession' ? 'Closing…' : 'Close tools'}
             </button>
           </div>
         </header>
 
         <div className="field-group">
-          <label className="field-label" htmlFor="protected-note-title">
+          <label className="field-label field-label--sr-only" htmlFor="protected-note-title">
             Title
           </label>
           <input
             id="protected-note-title"
-            className="text-input"
+            className="text-input text-input--title"
             type="text"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="Protected note title"
+            placeholder="Title"
           />
         </div>
 
         <div className="field-group field-group--fill">
-          <label className="field-label" htmlFor="protected-note-body">
+          <label className="field-label field-label--sr-only" htmlFor="protected-note-body">
             Content
           </label>
           <textarea
             id="protected-note-body"
-            className="text-area"
+            className="text-area text-area--note"
             value={body}
             onChange={(event) => setBody(event.target.value)}
             placeholder="Write here"
@@ -155,17 +154,17 @@ export function ProtectedNoteWorkspace({
         </div>
       </form>
 
-      <section className="workspace-card">
+      <section className="workspace-card workspace-card--tools">
         <header className="editor-header editor-header--stacked">
           <div>
-            <p className="editor-header__eyebrow">Managed items</p>
-            <h2 className="workspace-card__title">Files and folders in the protected area</h2>
+            <p className="editor-header__eyebrow">Stored items</p>
+            <h2 className="workspace-card__title">Files and folders</h2>
             <p className="workspace-card__body">
               {lockedItems.length === 0
-                ? 'Nothing is currently locked from the desktop yet.'
+                ? 'Nothing has been added from this note yet.'
                 : attentionCount > 0
-                  ? `${lockedItems.length} managed items, ${attentionCount} needing attention.`
-                  : `${lockedItems.length} managed items, all reconciled.`}
+                  ? `${lockedItems.length} items, ${attentionCount} needing attention.`
+                  : `${lockedItems.length} items saved and in sync.`}
             </p>
           </div>
 
@@ -178,7 +177,7 @@ export function ProtectedNoteWorkspace({
               }}
               disabled={pendingAction === 'pick:file'}
             >
-              {pendingAction === 'pick:file' ? 'Selecting…' : 'Lock file'}
+              {pendingAction === 'pick:file' ? 'Selecting…' : 'Add file'}
             </button>
             <button
               type="button"
@@ -188,7 +187,7 @@ export function ProtectedNoteWorkspace({
               }}
               disabled={pendingAction === 'pick:directory'}
             >
-              {pendingAction === 'pick:directory' ? 'Selecting…' : 'Lock folder'}
+              {pendingAction === 'pick:directory' ? 'Selecting…' : 'Add folder'}
             </button>
             <button
               type="button"
@@ -198,16 +197,16 @@ export function ProtectedNoteWorkspace({
               }}
               disabled={pendingAction === 'reconcileLockedItems'}
             >
-              {pendingAction === 'reconcileLockedItems' ? 'Refreshing…' : 'Refresh'}
+              {pendingAction === 'reconcileLockedItems' ? 'Refreshing…' : 'Refresh list'}
             </button>
           </div>
         </header>
 
         {lockedItems.length === 0 ? (
           <div className="empty-state">
-            <p className="empty-state__title">No locked items yet</p>
+            <p className="empty-state__title">No stored items yet</p>
             <p className="empty-state__body">
-              Use <strong>Lock file</strong> or <strong>Lock folder</strong> to add items from the protected area.
+              Use <strong>Add file</strong> or <strong>Add folder</strong> to store something from this note.
             </p>
           </div>
         ) : (
@@ -235,11 +234,11 @@ export function ProtectedNoteWorkspace({
 
                   <dl className="path-grid">
                     <div>
-                      <dt>Original path</dt>
+                      <dt>Original location</dt>
                       <dd>{item.originalPath}</dd>
                     </div>
                     <div>
-                      <dt>Locked path</dt>
+                      <dt>Stored location</dt>
                       <dd>{item.lockedPath}</dd>
                     </div>
                   </dl>
@@ -257,7 +256,7 @@ export function ProtectedNoteWorkspace({
                       }}
                       disabled={isRevealing}
                     >
-                      {isRevealing ? 'Revealing…' : 'Reveal location'}
+                      {isRevealing ? 'Opening…' : 'Show location'}
                     </button>
                     <button
                       type="button"
@@ -267,7 +266,7 @@ export function ProtectedNoteWorkspace({
                       }}
                       disabled={isUnlocking}
                     >
-                      {isUnlocking ? 'Unlocking…' : 'Unlock target'}
+                      {isUnlocking ? 'Restoring…' : 'Restore item'}
                     </button>
                   </div>
                 </li>
