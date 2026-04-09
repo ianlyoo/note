@@ -2,7 +2,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 import type { StoredState } from './models'
-import { createDefaultState } from './models'
+import { createDefaultState, normalizeState } from './models'
 
 export class StateStore {
   private readonly filePath: string
@@ -17,7 +17,7 @@ export class StateStore {
 
     try {
       const raw = await readFile(this.filePath, 'utf8')
-      return JSON.parse(raw) as StoredState
+      return normalizeState(JSON.parse(raw)) as StoredState
     } catch (error) {
       if (
         typeof error === 'object' &&
