@@ -14,7 +14,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "pack:dir": "npm run build && electron-builder --dir",
-    "dist:win": "npm run build && electron-builder --win nsis --x64 --publish never"
+    "dist:win": "npm run build && electron-builder --win portable --x64 --publish never"
   },
   "build": {
     "appId": "com.secretfolder.note",
@@ -30,21 +30,17 @@
     "win": {
       "target": [
         {
-          "target": "nsis",
+          "target": "portable",
           "arch": [
             "x64"
           ]
         }
       ],
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "artifactName": "${productName}-Portable-${version}.${ext}"
     },
-    "nsis": {
-      "oneClick": true,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": false,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Note"
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}.${ext}",
+      "unpackDirName": "NotePortable"
     }
   },
   "dependencies": {

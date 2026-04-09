@@ -1,4 +1,4 @@
-name: Build Windows installer
+name: Build Windows portable app
 
 on:
   workflow_dispatch:
@@ -29,12 +29,12 @@ jobs:
       - name: Run tests
         run: npm run test
 
-      - name: Build Windows installer
+      - name: Build Windows portable app
         run: npm run dist:win
 
-      - name: Upload Windows installer artifact
+      - name: Upload Windows portable artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Note-Setup
+          name: Note-Portable
           path: release/*.exe
           if-no-files-found: error

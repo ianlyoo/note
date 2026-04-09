@@ -16,9 +16,8 @@ interface PackageJsonShape {
         arch: string[]
       }>
     }
-    nsis: {
-      shortcutName: string
-      oneClick: boolean
+    portable: {
+      unpackDirName: string
     }
   }
 }
@@ -40,10 +39,10 @@ describe('Windows packaging configuration', () => {
     const packageJson = readPackageJson()
 
     expect(packageJson.scripts['pack:dir']).toContain('electron-builder --dir')
-    expect(packageJson.scripts['dist:win']).toContain('electron-builder --win nsis --x64')
+    expect(packageJson.scripts['dist:win']).toContain('electron-builder --win portable --x64')
   })
 
-  it('ships the built renderer and Electron bundles in the installer', () => {
+  it('ships the built renderer and Electron bundles in the portable build', () => {
     const packageJson = readPackageJson()
 
     expect(packageJson.build.files).toEqual(
@@ -51,17 +50,16 @@ describe('Windows packaging configuration', () => {
     )
   })
 
-  it('targets a Windows NSIS setup executable with the expected artifact name', () => {
+  it('targets a Windows portable executable with the expected artifact name', () => {
     const packageJson = readPackageJson()
 
     expect(packageJson.build.win.target).toEqual([
       {
-        target: 'nsis',
+        target: 'portable',
         arch: ['x64'],
       },
     ])
-    expect(packageJson.build.win.artifactName).toBe('${productName}-Setup-${version}.${ext}')
-    expect(packageJson.build.nsis.shortcutName).toBe('Note')
-    expect(packageJson.build.nsis.oneClick).toBe(true)
+    expect(packageJson.build.win.artifactName).toBe('${productName}-Portable-${version}.${ext}')
+    expect(packageJson.build.portable.unpackDirName).toBe('NotePortable')
   })
 })
