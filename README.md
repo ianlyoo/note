@@ -9,7 +9,7 @@ Note is a local desktop app that looks like a simple memo app on the surface, bu
 - hides the protected tools behind one ordinary-looking note
 - lets the owner lock a file or folder from the protected note area
 - restores the locked item back to its original path on unlock
-- packages a single portable Windows EXE through GitHub Actions
+- packages a Windows zip bundle that contains the runnable app
 
 ## Local development
 
@@ -26,7 +26,7 @@ npm run build
 npm run test
 ```
 
-## Build the portable Windows EXE locally
+## Build the Windows zip bundle locally
 
 ```bash
 npm run dist:win
@@ -35,7 +35,7 @@ npm run dist:win
 Expected output:
 
 ```bash
-release/Note-Portable-0.1.0.exe
+release/Note-Windows-0.1.0.zip
 ```
 
 ## GitHub Actions build
@@ -46,8 +46,8 @@ The repository includes a Windows workflow at:
 .github/workflows/windows-build.yml
 ```
 
-It runs on `windows-latest`, installs dependencies, runs lint and tests, then builds the portable EXE and uploads it as an artifact named `Note-Portable`.
+It runs on `windows-latest`, installs dependencies, runs lint and tests, then builds the Windows zip bundle and uploads it as an artifact named `Note-Windows-Zip`.
 
 ## Current security boundary
 
-This MVP is designed to stop casual local access, not advanced attackers, malware, or forensic analysis. The password is stored plainly in local app state for simplicity in this version, the trigger note unlocks the protected tools when its saved body matches that password, and locked items are restored to their original path on unlock.
+This MVP is designed to stop casual local access, not advanced attackers, malware, or forensic analysis. The password is stored plainly in local app state for simplicity in this version, the trigger note unlocks the protected tools when its saved body matches that password, locked items are restored to their original path on unlock, and packaged builds keep their `userdata` folder beside the extracted app executable.

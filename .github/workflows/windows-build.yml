@@ -1,4 +1,4 @@
-name: Build Windows portable app
+name: Build Windows zip app
 
 on:
   workflow_dispatch:
@@ -29,12 +29,12 @@ jobs:
       - name: Run tests
         run: npm run test
 
-      - name: Build Windows portable app
+      - name: Build Windows zip app
         run: npm run dist:win
 
-      - name: Upload Windows portable artifact
+      - name: Upload Windows zip artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Note-Portable
-          path: release/*.exe
+          name: Note-Windows-Zip
+          path: release/*.zip
           if-no-files-found: error
