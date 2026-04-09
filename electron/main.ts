@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -97,10 +98,10 @@ function getProtectedNote(state: StoredState) {
 }
 
 function getWindowIconPath() {
-  return app.isPackaged ? path.join(__dirname, '../icon.png') : path.join(process.cwd(), 'icon.png')
+  return app.isPackaged ? path.join(app.getPath('assets'), 'icon.png') : path.join(process.cwd(), 'icon.png')
 }
 
-function createWindow() {
+async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 980,
     height: 680,
@@ -124,9 +125,9 @@ function createWindow() {
   })
 
   if (process.env.VITE_DEV_SERVER_URL) {
-    void mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
+    await mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
   } else {
-    void mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
+    await mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
   }
 }
 
@@ -136,19 +137,26 @@ function configurePortableUserDataPath() {
   }
 
   const executableDirectory = path.dirname(app.getPath('exe'))
-  app.setPath('userData', path.join(executableDirectory, PORTABLE_DATA_DIRECTORY_NAME))
+  const userDataPath = path.join(executableDirectory, PORTABLE_DATA_DIRECTORY_NAME)
+
+  mkdirSync(userDataPath, { recursive: true })
+  app.setPath('userData', userDataPath)
 }
 
-app.whenReady().then(() => {
-  configurePortableUserDataPath()
+configurePortableUserDataPath()
+
+app.whenReady().then(async () => {
   store = new StateStore(app.getPath('userData'))
-  createWindow()
+  await createWindow()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
+      void createWindow()
     }
   })
+}).catch((error: unknown) => {
+  console.error('Failed to start Note.', error)
+  app.exit(1)
 })
 
 app.on('window-all-closed', () => {
