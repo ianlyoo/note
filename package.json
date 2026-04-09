@@ -14,7 +14,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "pack:dir": "npm run build && electron-builder --dir",
-    "dist:win": "npm run build && electron-builder --win nsis --x64"
+    "dist:win": "npm run build && electron-builder --win nsis --x64 --publish never"
   },
   "build": {
     "appId": "com.secretfolder.note",
