@@ -2,18 +2,11 @@ import { useState } from 'react'
 import { StatusBanner } from './StatusBanner'
 
 interface ProtectedNoteGateProps {
-  mode: 'setup' | 'unlock'
   isBusy: boolean
-  onSetPassword?: (password: string) => Promise<void>
-  onUnlock?: (password: string) => Promise<void>
+  onSetPassword: (password: string) => Promise<void>
 }
 
-export function ProtectedNoteGate({
-  mode,
-  isBusy,
-  onSetPassword,
-  onUnlock,
-}: ProtectedNoteGateProps) {
+export function ProtectedNoteGate({ isBusy, onSetPassword }: ProtectedNoteGateProps) {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [validationMessage, setValidationMessage] = useState<string | null>(null)
@@ -24,43 +17,24 @@ export function ProtectedNoteGate({
       return
     }
 
-    if (mode === 'setup') {
-      if (!onSetPassword) {
-        return
-      }
-
-      if (password !== confirmPassword) {
-        setValidationMessage('The passwords do not match yet.')
-        return
-      }
-
-      setValidationMessage(null)
-      await onSetPassword(password)
-      setPassword('')
-      setConfirmPassword('')
-      return
-    }
-
-    if (!onUnlock) {
+    if (password !== confirmPassword) {
+      setValidationMessage('The passwords do not match yet.')
       return
     }
 
     setValidationMessage(null)
-    await onUnlock(password)
+    await onSetPassword(password)
     setPassword('')
+    setConfirmPassword('')
   }
 
   return (
     <section className="workspace-card workspace-card--gate">
       <div className="gate-panel">
-        <p className="gate-panel__eyebrow">Protected note</p>
-        <h2 className="workspace-card__title">
-          {mode === 'setup' ? 'Create a password for the protected area' : 'Unlock the protected note'}
-        </h2>
+        <p className="gate-panel__eyebrow">First-time setup</p>
+        <h2 className="workspace-card__title">Set a password once for this device</h2>
         <p className="workspace-card__body">
-          {mode === 'setup'
-            ? 'Set a password once to open the protected note and manage locked files or folders.'
-            : 'Enter the password for this device to edit the protected note and manage locked items.'}
+          Save a password now. After setup, the app opens as a normal memo window and you can keep writing notes as usual.
         </p>
 
         {validationMessage ? <StatusBanner tone="error" message={validationMessage} /> : null}
@@ -82,35 +56,27 @@ export function ProtectedNoteGate({
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              autoComplete={mode === 'setup' ? 'new-password' : 'current-password'}
+              autoComplete="new-password"
             />
           </div>
 
-          {mode === 'setup' ? (
-            <div className="field-group">
-              <label className="field-label" htmlFor="protected-password-confirm">
-                Confirm password
-              </label>
-              <input
-                id="protected-password-confirm"
-                className="text-input"
-                type="password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                autoComplete="new-password"
-              />
-            </div>
-          ) : null}
+          <div className="field-group">
+            <label className="field-label" htmlFor="protected-password-confirm">
+              Confirm password
+            </label>
+            <input
+              id="protected-password-confirm"
+              className="text-input"
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              autoComplete="new-password"
+            />
+          </div>
 
           <div className="gate-panel__actions">
             <button type="submit" className="btn btn--primary" disabled={isBusy}>
-              {mode === 'setup'
-                ? isBusy
-                  ? 'Saving…'
-                  : 'Create password'
-                : isBusy
-                  ? 'Unlocking…'
-                  : 'Unlock protected note'}
+              {isBusy ? 'Saving…' : 'Save password'}
             </button>
           </div>
         </form>

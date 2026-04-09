@@ -15,7 +15,6 @@ function App() {
     dismissStatus,
     reloadBootstrap,
     setMasterPassword,
-    unlockProtectedNote,
     lockProtectedSession,
     savePlainNote,
     saveProtectedNote,
@@ -46,27 +45,13 @@ function App() {
     return bootstrap.notes.find((note) => note.id === resolvedSelectedNoteId) ?? null
   }, [bootstrap, resolvedSelectedNoteId])
 
-  const protectedAreaLabel = useMemo(() => {
-    if (!bootstrap) {
-      return 'Connecting'
-    }
-
-    if (!bootstrap.hasPassword) {
-      return 'Setup required'
-    }
-
-    return bootstrap.sessionUnlocked ? 'Unlocked' : 'Locked'
-  }, [bootstrap])
-
   if (!bootstrap && isLoading) {
     return (
       <div className="app-shell app-shell--state">
         <section className="state-panel" aria-live="polite">
           <p className="state-panel__eyebrow">Note</p>
           <h1 className="state-panel__title">Loading your workspace</h1>
-          <p className="state-panel__body">
-            Opening notes and checking the protected area status.
-          </p>
+          <p className="state-panel__body">Opening your notes and restoring the last workspace state.</p>
         </section>
       </div>
     )
@@ -96,6 +81,27 @@ function App() {
     )
   }
 
+  if (!bootstrap.hasPassword) {
+    return (
+      <div className="app-shell app-shell--state app-shell--setup">
+        {status ? (
+          <StatusBanner tone={status.tone} message={status.message} onDismiss={dismissStatus} />
+        ) : null}
+
+        <ProtectedNoteGate
+          isBusy={pendingAction === 'setMasterPassword'}
+          onSetPassword={async (password) => {
+            await setMasterPassword(password)
+          }}
+        />
+      </div>
+    )
+  }
+
+  const isProtectedWorkspaceOpen = Boolean(
+    selectedNote && selectedNote.kind === 'protected' && !selectedNote.isLocked && bootstrap.sessionUnlocked,
+  )
+
   return (
     <div className="app-shell">
       <header className="app-topbar">
@@ -103,19 +109,9 @@ function App() {
           <p className="app-topbar__eyebrow">Personal notes</p>
           <h1 className="app-topbar__title">Note</h1>
         </div>
-        <div className="session-summary" aria-live="polite">
-          <div>
-            <p className="session-summary__label">Protected area</p>
-            <p className="session-summary__value">{protectedAreaLabel}</p>
-          </div>
-          <span
-            className={`session-badge ${
-              bootstrap.sessionUnlocked ? 'session-badge--success' : 'session-badge--muted'
-            }`}
-          >
-            {bootstrap.notes.length} notes
-          </span>
-        </div>
+        <p className="app-topbar__meta">
+          {bootstrap.notes.length} {bootstrap.notes.length === 1 ? 'note' : 'notes'}
+        </p>
       </header>
 
       <main className="app-main">
@@ -134,59 +130,39 @@ function App() {
 
           {!selectedNote ? (
             <section className="workspace-card workspace-card--empty">
-              <h2 className="workspace-card__title">Choose a note</h2>
+              <h2 className="workspace-card__title">Select a note</h2>
               <p className="workspace-card__body">
-                Select a note from the list to start editing.
+                Pick a note from the list to start writing.
               </p>
             </section>
-          ) : selectedNote.kind === 'protected' ? (
-            !bootstrap.hasPassword ? (
-              <ProtectedNoteGate
-                key="protected-setup"
-                mode="setup"
-                isBusy={pendingAction === 'setMasterPassword'}
-                onSetPassword={async (password) => {
-                  await setMasterPassword(password)
-                }}
-              />
-            ) : selectedNote.isLocked || !bootstrap.sessionUnlocked ? (
-              <ProtectedNoteGate
-                key="protected-unlock"
-                mode="unlock"
-                isBusy={pendingAction === 'unlockProtectedNote'}
-                onUnlock={async (password) => {
-                  await unlockProtectedNote(password)
-                }}
-              />
-            ) : (
-              <ProtectedNoteWorkspace
-                key={selectedNote.id}
-                note={selectedNote}
-                lockedItems={bootstrap.lockedItems}
-                pendingAction={pendingAction}
-                onSave={async (title, body) => {
-                  await saveProtectedNote(title, body)
-                }}
-                onLockSession={async () => {
-                  await lockProtectedSession()
-                }}
-                onPickAndLock={async (targetType) => {
-                  await pickAndLockTarget(targetType)
-                }}
-                onRefreshLockedItems={async () => {
-                  await reconcileLockedItems()
-                }}
-                onUnlockTarget={async (lockId) => {
-                  await unlockTarget(lockId)
-                }}
-                onRevealTarget={async (lockId) => {
-                  await revealLockedItem(lockId)
-                }}
-              />
-            )
+          ) : isProtectedWorkspaceOpen ? (
+            <ProtectedNoteWorkspace
+              key={selectedNote.id}
+              note={selectedNote}
+              lockedItems={bootstrap.lockedItems}
+              pendingAction={pendingAction}
+              onSave={async (title, body) => {
+                await saveProtectedNote(title, body)
+              }}
+              onLockSession={async () => {
+                await lockProtectedSession()
+              }}
+              onPickAndLock={async (targetType) => {
+                await pickAndLockTarget(targetType)
+              }}
+              onRefreshLockedItems={async () => {
+                await reconcileLockedItems()
+              }}
+              onUnlockTarget={async (lockId) => {
+                await unlockTarget(lockId)
+              }}
+              onRevealTarget={async (lockId) => {
+                await revealLockedItem(lockId)
+              }}
+            />
           ) : (
             <PlainNoteEditor
-              key={selectedNote.id}
+              key={`${selectedNote.id}:${selectedNote.isLocked ? 'locked' : 'open'}`}
               note={selectedNote}
               isSaving={pendingAction === `savePlain:${selectedNote.id}`}
               onSave={async (noteId, title, body) => {

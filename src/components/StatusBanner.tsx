@@ -19,7 +19,7 @@ export function StatusBanner({ tone, message, onDismiss }: StatusBannerProps) {
           onClick={onDismiss}
           aria-label="Dismiss status message"
         >
-          Dismiss
+          ×
         </button>
       ) : null}
     </div>
